@@ -4,7 +4,7 @@
 
 ## 中文
 
-一个可复用、注重隐私的 Skill，用于将 NYC CityJobs 的 IT 招聘岗位与匿名化的候选人经历进行匹配。
+一个可复用、注重隐私的 Skill，用于将 NYC CityJobs 的招聘岗位与匿名化的候选人经历进行匹配。
 
 ### 核心功能
 
@@ -18,9 +18,15 @@
 
 ### 搜索范围与结果
 
-覆盖 Windows 系统管理、Help Desk／Service Desk、桌面支持、Endpoint、MDM／UEM、基础设施支持和 Cyber Security Analyst 等 IT 岗位。
+不预设 IT、技术标签或任何固定职业范围，搜索方式由用户需求决定：
 
-根据职位职责和要求匹配，不只比较职位名称。推荐结果包括官方申请链接、机构、职位编号、薪资、发布日期和截止日期、任用资格、匹配理由、缺口及可能的硬性限制。对适合的岗位提供简历调整建议，并标记未来 14 天内的截止日期。
+- **已明确目标：** 按用户指定的职位、职责、关键词、机构和限制搜索。
+- **不确定目标：** 根据匿名化工作经历、技能、成果、学历和执照判断适合的职位方向，再查找并逐条匹配招聘 JD。
+- **已有职位链接或 JD：** 直接对照用户经历分析该岗位是否适合，无需先指定职位类别。
+
+用户明确的搜索范围优先；经历用于判断范围内每条 JD 的匹配度。其他可能适合的方向会单独建议，不会擅自改变搜索范围。
+
+逐条对照 JD 的必要资格、核心职责和优先条件，标明已有证据、部分符合、缺失或未知；不只比较职位名称或标签。推荐结果包括官方申请链接、机构、职位编号、薪资、发布日期和截止日期、任用资格、匹配理由、缺口及可能的硬性限制。对适合的岗位提供简历调整建议，并标记未来 14 天内的截止日期。
 
 每次搜索使用最新资料，第三方信息仅用于发现线索，推荐前以官方招聘信息核实。已关闭的岗位不应作为可申请职位推荐。
 
@@ -32,13 +38,13 @@
 
 ```text
 $nyc-cityjobs-matcher
-根据我的匿名化工作经历，帮我寻找仍开放且匹配度高的 NYC IT 岗位，并排除我已申请的职位。
+根据我的匿名化工作经历，帮我寻找仍开放且匹配度高的 NYC 岗位，并排除我已申请的职位。
 ```
 
 匿名化经历可以包含：
 
 - 岗位类型、职责和大致工作年限。
-- 技术、工具、平台和环境规模。
+- 专业技能、方法、工具、领域知识和工作规模。
 - 可量化成果、证书和学历。
 - 公务员 title、考试或名单资格（自愿提供）。
 - 薪资、地点、通勤和办公方式偏好。
@@ -67,7 +73,7 @@ Skill 定义匹配流程和状态结构，实际持久保存取决于运行环�
 
 ## English
 
-A reusable, privacy-preserving skill for matching NYC CityJobs IT vacancies against an anonymized candidate profile.
+A reusable, privacy-preserving skill for matching NYC CityJobs vacancies against an anonymized candidate profile.
 
 ### Core behavior
 
@@ -81,9 +87,15 @@ A reusable, privacy-preserving skill for matching NYC CityJobs IT vacancies agai
 
 ### Search scope and results
 
-Covers IT roles in Windows systems administration, help desk/service desk, desktop support, endpoint support, MDM/UEM, infrastructure support and cyber security analysis.
+No IT focus, technology tags or fixed occupation list is imposed. The search follows the user's needs:
 
-Matching considers duties and requirements rather than exact job titles alone. Recommendations include official application links, agencies, job identifiers, salaries, posting and closing dates, civil-service eligibility, fit explanations, gaps and potential disqualifiers. Suitable roles receive resume-tailoring suggestions, and deadlines within 14 days are flagged.
+- **Known targets:** Search the roles, duties, keywords, agencies and constraints specified by the user.
+- **Unknown targets:** Infer suitable role families from anonymized experience, skills, achievements, education and licenses, then search and assess each posting's JD.
+- **An existing posting or JD:** Compare it directly with the user's experience without requiring a role family first.
+
+Explicit scope controls where to search; experience determines how well each JD fits. Other suitable directions are offered separately rather than silently changing the scope.
+
+Each JD is compared with the profile's evidence, separating mandatory qualifications, essential duties and preferred qualifications. Material requirements are marked as supported, partially supported, missing or unknown; titles and tags alone do not establish fit. Recommendations include official application links, agencies, job identifiers, salaries, posting and closing dates, civil-service eligibility, fit explanations, gaps and potential disqualifiers. Suitable roles receive resume-tailoring suggestions, and deadlines within 14 days are flagged.
 
 Every search uses fresh research. Third-party information is for discovery only; recommendations are verified against official postings. Closed vacancies should not be presented as actionable opportunities.
 
@@ -95,13 +107,13 @@ Example:
 
 ```text
 $nyc-cityjobs-matcher
-Find high-fit NYC IT vacancies that are still open using my anonymized work experience, and exclude jobs I have already applied to.
+Find high-fit NYC vacancies that are still open using my anonymized work experience, and exclude jobs I have already applied to.
 ```
 
 An anonymized profile can include:
 
 - Role types, responsibilities and approximate years of experience.
-- Technologies, tools, platforms and environment scale.
+- Professional skills, methods, tools, domain knowledge and work scope.
 - Quantified achievements, certifications and education.
 - Civil-service title, exam or list eligibility, optionally.
 - Salary, location, commute and work-arrangement preferences.
