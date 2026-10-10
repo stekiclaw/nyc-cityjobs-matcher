@@ -1,163 +1,46 @@
-# NYC CityJobs Matcher Skill
+# NYC CityJobs Matcher — Prompt-Based Skill
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-一个可复用、注重隐私的 Skill，用于将 NYC CityJobs 的招聘岗位与匿名化的候选人经历进行匹配。
+**定位：** 面向 ChatGPT Scheduled Tasks、Meta Muse 及其他网页端 Agent 的纯提示词 `SKILL.md`，不运行 Python、数据库或自建爬虫服务。宿主 Agent 负责搜索官方职位、读取 JD、按规则判断、跨次状态（如支持）、任务调度和通知。
 
-### 核心功能
+### 主要功能
+1. 用户明确选择搜索范围时，严格按范围检索，不限定 IT 或特定职业。
+2. 用户不知道适合哪些岗位时，先收集不含雇主、人名及隐私信息的工作经历，再推断职业方向。
+3. 每条职位实际阅读 JD：分别检查必须资格、Civil Service 任用条件、日常职责、优先资质和真实经历证据。
+4. 用户申请后主动索取官方 Posting URL，并记录可访问的 Job ID/JID 以排除重复申请。
+5. 同机构同职位名称不自动判定为重复；类似 repost 只有证据足够才排除，边界情况单列复核。
+6. 在用户要求时，由宿主为不同职位范围分别创建**定时计划任务**：仅新出现、仍开放、未申请且符合资格的优质岗位才提醒，或者按用户选择发送固定摘要。
 
-1. 首次进行个性化匹配时，主动要求用户提供匿名化的工作经历。
-2. 明确提示：不要提供个人工作经历中的雇主、公司、机构名称或任何人名。
-3. 查询当前 NYC CityJobs 官方招聘信息，按照技能、职责、工作规模、成果、资质、公务员任用资格和个人偏好评估匹配程度。
-4. 用户表示已申请岗位时，如未提供官方职位链接，主动索取该链接。
-5. 从链接提取 Job ID、JID 和招聘信息，将岗位加入已申请岗位记录（Applied Jobs Ledger）。
-6. 在后续推荐中排除已申请岗位及实质相同的重新发布岗位。
-7. 提供真实的简历调整建议，不编造经验或资质。
+### 网页端使用步骤
+1. 交互调用 `SKILL.md` 获取搜索范围和匿名化经历（[模板](references/INTAKE_TEMPLATE.md)）。
+2. 将[自包含的定时任务提示词](references/task-templates.md)填入 ChatGPT Scheduled Tasks 或 Muse 支持的目标/自动化任务。不同搜索条件建议建立不同任务。
+3. 申请职位后更新同一个计划任务能够访问的 Applied Jobs 列表；不要假设其他聊天中的记录自动同步。
+4. 用[验收场景](references/acceptance-scenarios.md)验证首次基线、重复岗位、官方关闭状态和无变化时的行为。
 
-### 搜索范围与结果
-
-不预设 IT、技术标签或任何固定职业范围，搜索方式由用户需求决定：
-
-- **已明确目标：** 按用户指定的职位、职责、关键词、机构和限制搜索。
-- **不确定目标：** 根据匿名化工作经历、技能、成果、学历和执照判断适合的职位方向，再查找并逐条匹配招聘 JD。
-- **已有职位链接或 JD：** 直接对照用户经历分析该岗位是否适合，无需先指定职位类别。
-
-用户明确的搜索范围优先；经历用于判断范围内每条 JD 的匹配度。其他可能适合的方向会单独建议，不会擅自改变搜索范围。
-
-逐条对照 JD 的必要资格、核心职责和优先条件，标明已有证据、部分符合、缺失或未知；不只比较职位名称或标签。推荐结果包括官方申请链接、机构、职位编号、薪资、发布日期和截止日期、任用资格、匹配理由、缺口及可能的硬性限制。对适合的岗位提供简历调整建议，并标记未来 14 天内的截止日期。
-
-每次搜索使用最新资料，第三方信息仅用于发现线索，推荐前以官方招聘信息核实。已关闭的岗位不应作为可申请职位推荐。
-
-### 安装与使用
-
-将整个仓库作为 `nyc-cityjobs-matcher` 文件夹安装到支持 `SKILL.md` 的助手环境，并按照该环境的 Skills 安装流程启用。
-
-示例：
-
-```text
-$nyc-cityjobs-matcher
-根据我的匿名化工作经历，帮我寻找仍开放且匹配度高的 NYC 岗位，并排除我已申请的职位。
-```
-
-匿名化经历可以包含：
-
-- 岗位类型、职责和大致工作年限。
-- 专业技能、方法、工具、领域知识和工作规模。
-- 可量化成果、证书和学历。
-- 公务员 title、考试或名单资格（自愿提供）。
-- 薪资、地点、通勤和办公方式偏好。
-
-不要提供雇主或人名、联系方式、员工编号、内部主机名、私有链接、账号或凭据。无需上传完整简历，简短要点即可。公开招聘信息中的机构名称可出现在结果及申请记录中。
-
-如果不提供经历，仍可进行一般职位搜索，但结果不能标为个性化匹配排名。
-
-### 已申请岗位排除
-
-申请后，将官方 NYC CityJobs 职位链接提供给助手。Skill 会使用 Job ID、JID、官方 URL、机构与职位信息识别岗位，并排除实质相同的重新发布记录。
-
-如果暂时没有链接，可以在当前对话中临时排除明确指出的职位；持久去重仍需要官方链接。对疑似但无法确认相同的重新发布岗位，说明不确定性，避免误删不同机会。
-
-### 文件结构
-
-- `SKILL.md`：主要执行指令。
-- `references/INTAKE_TEMPLATE.md`：匿名化经历收集模板。
-- `references/STATE_SCHEMA.md`：候选人资料和已申请岗位记录的逻辑结构。
-
-### 状态保存说明
-
-Skill 定义匹配流程和状态结构，实际持久保存取决于运行环境。支持用户／Skill 状态时，将匿名化资料和已申请岗位记录保存在该环境中。否则只在当前对话中维护，切换环境时需要用户提供或导出记录。
-
-仅安装 Skill 不会自动创建定时任务，也不能保证跨环境保留申请记录。不要将个人资料或申请记录提交到此公开仓库。
+**注意：** 项目本身不能保证 ChatGPT 或 Muse 会直接安装/调用 GitHub Skill；定时执行及跨次结果访问取决于宿主。将完整规则和必要的匿名输入保留在任务自身的私有指令中。公开仓库不应包含候选人工作经历或申请记录。
 
 ## English
 
-A reusable, privacy-preserving skill for matching NYC CityJobs vacancies against an anonymized candidate profile.
+A **prompt-only, browser-agent Skill** for searching current official NYC CityJobs and matching real job descriptions to an anonymized candidate profile. Intended for ChatGPT Scheduled Tasks, Meta Muse and similar cloud agents; no local Python, crawler, database or hosted app required.
 
-### Core behavior
+### Workflows
+- **Explicit targets:** search strictly within the user's requested scope, any occupational domain.
+- **Unknown targets:** infer supported role families from anonymized professional duties and credentials, then read actual vacancy JDs.
+- **Specific JD:** assess mandatory eligibility, civil-service requirements, responsibilities and evidence; never inflate matches based on title/keywords.
+- **Applied exclusions:** save official Job ID/JID/URL in the host's private task instructions or state; identical agency/title is **not** sufficient for auto-exclusion.
+- **Scheduled monitoring:** create independent host tasks by user-selected scope/cadence; notify for verified newly open, qualified, unapplied opportunities or send selected digests.
 
-1. On first personalized use, asks the user for anonymized work experience.
-2. Explicitly tells the user not to provide employer, company or agency names from their own work history, or people's names.
-3. Searches current official NYC CityJobs listings and ranks fit using skills, responsibilities, scale, achievements, credentials, civil-service eligibility and preferences.
-4. When the user says they applied to a job, requests the official job-posting URL if it was not supplied.
-5. Extracts Job ID, JID and posting metadata from the link and adds the vacancy to an Applied Jobs Ledger.
-6. Excludes the applied vacancy and materially identical reposts from future recommendations.
-7. Provides truthful resume-tailoring notes without inventing experience or qualifications.
+### Start
+Use `SKILL.md` interactively to obtain scope and anonymous input, then put the [standalone scheduled task prompt](references/task-templates.md) into the hosting platform. It works even without automatic `SKILL.md` loading. Keep private applied-job IDs in task-accessible state and update task instructions following each new application. If previous run state is unavailable, do not claim to know which jobs are newly posted. [Acceptance scenarios](references/acceptance-scenarios.md) cover expected behavior.
 
-### Search scope and results
+## Files
+- `SKILL.md` — agent instructions.
+- `references/INTAKE_TEMPLATE.md` — anonymized input.
+- `references/STATE_SCHEMA.md` — **conceptual**, host-dependent private state.
+- `references/task-templates.md` — standalone recurring task instructions.
+- `references/acceptance-scenarios.md` — manual prompt-level evaluation cases.
 
-No IT focus, technology tags or fixed occupation list is imposed. The search follows the user's needs:
-
-- **Known targets:** Search the roles, duties, keywords, agencies and constraints specified by the user.
-- **Unknown targets:** Infer suitable role families from anonymized experience, skills, achievements, education and licenses, then search and assess each posting's JD.
-- **An existing posting or JD:** Compare it directly with the user's experience without requiring a role family first.
-
-Explicit scope controls where to search; experience determines how well each JD fits. Other suitable directions are offered separately rather than silently changing the scope.
-
-Each JD is compared with the profile's evidence, separating mandatory qualifications, essential duties and preferred qualifications. Material requirements are marked as supported, partially supported, missing or unknown; titles and tags alone do not establish fit. Recommendations include official application links, agencies, job identifiers, salaries, posting and closing dates, civil-service eligibility, fit explanations, gaps and potential disqualifiers. Suitable roles receive resume-tailoring suggestions, and deadlines within 14 days are flagged.
-
-Every search uses fresh research. Third-party information is for discovery only; recommendations are verified against official postings. Closed vacancies should not be presented as actionable opportunities.
-
-### Installation and use
-
-Install the entire repository as a folder named `nyc-cityjobs-matcher` in an assistant environment that supports `SKILL.md`, following that host's skill installation procedure.
-
-Example:
-
-```text
-$nyc-cityjobs-matcher
-Find high-fit NYC vacancies that are still open using my anonymized work experience, and exclude jobs I have already applied to.
-```
-
-An anonymized profile can include:
-
-- Role types, responsibilities and approximate years of experience.
-- Professional skills, methods, tools, domain knowledge and work scope.
-- Quantified achievements, certifications and education.
-- Civil-service title, exam or list eligibility, optionally.
-- Salary, location, commute and work-arrangement preferences.
-
-Do not provide employer or person names, contact details, employee IDs, internal hostnames, private URLs, account information or credentials. A complete resume is not required; a short bullet summary is sufficient. Public agency names from job postings may appear in results and the application ledger.
-
-If the user declines to provide a profile, the skill can perform a general search, but it must not describe the results as a personalized fit ranking.
-
-### Applied-job exclusions
-
-After applying, give the assistant the official NYC CityJobs posting link. The skill uses Job ID, JID, canonical URL, agency and vacancy details to identify the job and exclude materially identical reposts.
-
-Without a link, an explicitly identified job can be temporarily suppressed in the current conversation. Durable deduplication still requires the official posting URL. Borderline reposts should be labeled as uncertain rather than silently excluding a potentially different vacancy.
-
-### Package structure
-
-- `SKILL.md`: Main skill instructions.
-- `references/INTAKE_TEMPLATE.md`: Privacy-preserving experience intake.
-- `references/STATE_SCHEMA.md`: Logical schema for the anonymized profile and Applied Jobs Ledger.
-
-### Persistence
-
-The skill defines behavior and a state model; actual persistence depends on the host. If the host supports skill or user state, store the normalized profile and Applied Jobs Ledger there. Otherwise, maintain them in the active conversation and ask the user to provide or export the ledger when moving to a new environment.
-
-Installing the skill does not create a scheduled task or guarantee that application history transfers between environments. Do not commit personal profiles or application ledgers to this public repository.
-
-
-## 修复后的本地状态工具 / Persistent ledger helper
-
-本仓库新增 `scripts/cityjobs_state.py`（Python 3.9+、仅标准库），为 Agent 提供**可执行**的申请记录保存、重复排除和待复核识别；**不负责联网搜索或自动评价 JD**。Agent 必须先核对官方 CityJobs 页面，再构造 JSON 输入。状态默认保存在当前计算机的 `~/.local/share/nyc-cityjobs-matcher/state.json`，而非 GitHub 仓库。
-
-**中文示例：**
-```bash
-python scripts/cityjobs_state.py add --record verified_applied_job.json
-python scripts/cityjobs_state.py list
-python scripts/cityjobs_state.py filter --input verified_current_postings.json --as-of 2026-10-10
-python -m unittest discover -s tests -v
-```
-
-`verified_applied_job.json` 为单条记录，例如：
-```json
-{"canonical_url":"https://cityjobs.nyc.gov/job/example-jid-12345","job_id":"123456","agency":"Example Agency","business_title":"Example Role"}
-```
-
-`verified_current_postings.json` 是相同格式记录构成的 JSON 数组，建议加入核实的 `civil_service_title`、`unit`、`duties`、`qualifications`、`compensation`、`closing_date` 和 `explicit_status`。输出区分 `candidates`、`excluded_applied`、`possible_reposts`、`closed`、`duplicate_results`。同一机构/职位名称**不足以自动排除**。不要把未核实的职位状态当成仍在招聘。若在其他主机使用，需要自行安全迁移本地状态文件。
-
-**English:** The stdlib-only helper persists an applied-jobs ledger locally and conservatively excludes exact matches or well-corroborated reposts. It does not fetch vacancies, match resumes, or synchronize state between devices. Supply Agent-verified official job records as a JSON object (`add`) or array (`filter`), and review `possible_reposts` rather than suppressing them. Explicit expired/closed notices override future posted-until dates. CI runs `python -m unittest discover -s tests -v` on Python 3.11 and 3.13.
+**The host, not this repository, is responsible for scheduling, persistence and notifications.**

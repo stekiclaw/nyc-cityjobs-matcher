@@ -1,267 +1,53 @@
 ---
 name: nyc-cityjobs-matcher
-description: Use when searching NYC CityJobs for roles within a user's requested scope or matching job descriptions to an anonymized work-experience profile, including when the user needs help identifying suitable role families. Builds matching from a privacy-preserving, anonymized work-experience profile and excludes previously applied jobs using user-supplied official job-posting links.
+description: Prompt-only NYC CityJobs search, anonymous work-experience-to-JD matching and exclusion of previously applied jobs, designed for browser agents and scheduled/recurring cloud monitoring. No executable application required.
 ---
 
 # NYC CityJobs Matcher
 
-## Purpose
+## Purpose and host modes
+A **prompt-based Skill**, not a standalone job scraper, Python service, job database or CI suite. The host agent must browse official vacancies, reason over JDs, access any available private profile/previous run state, schedule user-authorized work, and notify. Do not assume a future scheduled run auto-loads this SKILL.md.
 
-Find newly posted or still-open NYC CityJobs roles within the user's requested scope. Support any job family available on NYC CityJobs; do not impose a default occupation, sector, technology tag or fixed list of job titles. If the user is unsure what to search for, infer suitable role families from their anonymized experience and match actual posting job descriptions (JDs) to that evidence.
+- **Interactive search:** Respect user-requested search scope (any role family). If target roles are unknown, first ask for an anonymized professional background and infer supported directions; if scope is known, stay within it.
+- **Direct posting review:** Compare user-supplied official posting/JD to an anonymized profile, without requiring a prior role choice.
+- **Recurring/monitoring:** With explicit user request, build a separately named host task for the search scope, preferred cadence and notification mode. Host task prompts must be **self-contained**, including search filters, anonymized evidence, hard eligibility gates and applied-job exclusion identifiers. See [task-templates.md](references/task-templates.md). Use a supported host scheduling tool and avoid duplicates. Do not claim background monitoring until host confirms creation. Never ask follow-up questions during a scheduled run: report missing configuration and require correction outside the run.
 
-This skill is intentionally generic. It must not assume or import any specific person's work history, employer, application history, name, or prior conversations unless the user explicitly supplies that information for this skill.
+## Data minimization and intake
+For personalized recommendations obtain a usable anonymized candidate profile, or reuse one verifiably available in the current host/task settings. Ask only for missing experience, approximate years, duties, skills/tools, measurable scale/results, education/licenses/certifications, civil-service eligibility (optional), salary/location/work-arrangement preferences and explicit target/exclusions. **Do not request or store names of the candidate's employers/agencies or coworkers, contacts, street addresses, employee IDs, case/ticket IDs, secrets, private links, hostnames or account details.** Normalize volunteered employer names to generic employer type. Public agency names appearing in vacancies are fine.
 
-## Non-negotiable privacy rule
+If no profile or the user declines one, offer a **general search** and do not claim personalized fit. Do not reconstruct private experience from unrelated conversations unless the user explicitly provides/authorizes it for the Skill. Keep explicitly selected job scope separate from inferred suggestions; never silently broaden.
 
-Before performing a personalized job match, obtain an anonymized candidate profile.
+## Live search and availability verification
+At each run, search current official NYC CityJobs vacancies using host web/browser tools. Other sites are discovery only; verify every recommended vacancy on official `https://cityjobs.nyc.gov/job/...`. Do not invent ID, salary, dates, work arrangement, eligibility or official URL. Extract:
+- Agency, exact business title, Job ID, JID/slug, official URL
+- Civil-service title, unit/division when available
+- Duties, mandatory qualifications vs preferred qualifications
+- Salary range, posting date, closing date, location/work arrangement
+- Current explicit site status including closed/expired and whether applications are accepted.
 
-The profile may contain:
-- job functions and role level;
-- years of experience;
-- professional skills, methods, tools, and relevant domain knowledge;
-- work scope, project scale, service volume, or organizational complexity;
-- responsibilities;
-- measurable accomplishments;
-- certifications and education;
-- civil-service title/list/exam eligibility, if the user chooses to provide it;
-- salary, location, schedule, commute, hybrid/onsite, or other job preferences.
+An official "expired"/"closed" notice takes precedence over a future stated closing date. A future closing date alone cannot establish that the application is open. Mark inaccessible/ambiguous status as **unverified**, not as an actionable opening. If the host cannot browse/verify official results, say so; do not report zero new jobs or no changes as if verified.
 
-The profile must not require:
-- employer/company/agency names from the user's work history;
-- coworker, manager, client, or other person names;
-- personal contact information;
-- exact street addresses;
-- employee IDs, case IDs, ticket IDs, asset tags, or account numbers;
-- confidential hostnames, internal domains, private URLs, credentials, keys, or secrets.
+## Evidence-based JD matching
+For every verified candidate vacancy, compare each **mandatory requirement**, day-to-day responsibility, and preferred criterion separately to the supplied anonymized profile; classify evidence as `supported`, `partially supported`, `missing`, or `unknown`. Civil-service list/title/appointment/hiring-pool eligibility is a gating condition, not a small score penalty. Confirmed unmet mandatory gate => Low fit / likely disqualified even with many keyword overlaps. Unknown gating requirement prevents Strong match until clarified. Strong = documented mandatory gates + substantial duties evidence; Good = confirmed gates and transferable duties; Stretch = relevant evidence but significant non-disqualifying gaps. Do not invent education/certifications/titles, numeric fit probabilities, or achievements. Read JDs; titles/keywords alone only aid discovery. For Strong/useful Good matches give 3–5 *truthful* resume-tailoring notes.
 
-If the user provides identifying employer or person names unnecessarily, do not repeat them in the normalized profile. Generalize them, for example:
-- "NYC public-sector agency"
-- "large enterprise"
-- "mid-size nonprofit"
-- "managed-service provider"
+## Applied Jobs Ledger and conservative deduplication
+When user says "applied" / "exclude" without official posting URL, proactively ask for that link in interactive mode. For unattended work, rely only on identifiers already stored in task/private accessible ledger. Prefer official Job ID, URL/JID, agency, exact title, civil-service title, unit, posting date and a short evidence-backed JD signature. Keep application records privately in **host-provided task instructions or state** if available; never add them to this public repo. If host cannot retain state, explain this and give a copy/paste update to the task prompt rather than falsely claiming permanent exclusion.
 
-Public employer/agency names appearing in NYC job postings are allowed in search results and the application-exclusion ledger because they describe the public vacancy, not the user's private work history.
+Strong exclusion: same official Job ID, exact official JID/URL (after sensible canonicalization). A new Job ID with same agency/title is **NOT** enough to exclude; treat as possible repost and require distinctive corroboration (same specific unit, duties, civil-service title, requirements, etc.). Even similar standardized JDs may represent distinct openings. Borderline cases go to **Review**, not auto-excluded. Apply same conservatism to deduplicate current search results. If only an agency/title is known without link, temporarily suppress in the current interactive session, then request official URL for durable exclusions.
 
-## Intake gate
+The saved task should have a reliable applied-job list or identifiers. If it cannot access that list at runtime, do not claim "not yet applied" has been verified. An application update after task creation must be reflected in saved task instructions or an accessible host ledger before the next scheduled run; merely writing it in another chat may not propagate.
 
-At the start of a personalized search, check whether a usable anonymized candidate profile is already available in the current skill context.
+## Cloud scheduling and change alerts
+Help create/update tasks **only** on user's explicit request for recurring checks. A task is scoped to a specified search, profile and hard filters; allow multiple independent tasks with different targets/cadences. Use supported host scheduler, not a fabricated background daemon. Do not request a specific minute when an approximate schedule is acceptable. If host does not offer scheduling or skill invocation, supply portable task template for manual paste. First scheduled run sets a baseline; it may return an initial candidate digest if requested, but should not claim a "newly appeared" job without verified previous dated evidence.
 
-If no usable profile is available, ask the user to provide one before ranking jobs. Use a compact request similar to:
+At every subsequent run:
+1. Recheck official open status and required qualifications of candidate postings.
+2. Exclude verified applied records and exact duplicates; flag uncertain reposts separately.
+3. Compare **stable official job identifiers** with the last *accessible, successful* run under the same scope. Only label a job "new" if the evidence supports it; also flag material newly verified qualification/status changes.
+4. In changes-only mode notify for meaningful newly found, open, not-applied, high-fit opportunities or important verified changes. Do not notify for unchanged old jobs, timestamp-only changes, or unreliable/unverified vacancies.
+5. If query fails, do not replace the last successful baseline or claim "no new jobs". If no previous state is accessible, clearly label as a current snapshot, not a delta. Suppress no-change notifications only when the host supports it.
 
-> To match jobs accurately, please send an anonymized work-history summary. Do not include company/agency names or people's names. Include your role types, approximate years of experience, main professional skills/tools, responsibilities, work scope, measurable accomplishments, certifications/education, civil-service eligibility if relevant, and any salary/location/work-arrangement preferences.
+For each recommendation: title, agency, Job ID/JID, salary, post/close date, official link, civil-service title, hard eligibility, minimum qualifications, duties evidence, fit bucket, gaps and 14-day deadline flag; add location/work mode if listed. Alert reports should be concise and source-backed.
 
-Do not require a resume. A short bullet summary is sufficient.
-
-If the user declines to provide a profile, the skill may perform a generic NYC CityJobs search, but it must clearly label the output as a general search rather than a personalized fit ranking.
-
-See `references/INTAKE_TEMPLATE.md` for the preferred structured intake.
-
-## Candidate profile normalization
-
-Convert the user's anonymized input into a concise profile with these fields when available:
-
-- requested_search_scope (explicit role families, titles, keywords, agencies and constraints)
-- target_role_families
-- inferred_role_families (with supporting experience and material gaps)
-- seniority and years_experience
-- responsibilities
-- professional_skills
-- tools_and_methods
-- domain_knowledge
-- work_scope
-- quantified_accomplishments
-- certifications and professional_licenses
-- education
-- civil_service_status
-- salary_preferences, location_preferences and work_arrangement_preferences
-- hard_exclusions
-
-Preserve user-provided target roles separately from inferred suggestions. Do not silently broaden or replace an explicit scope. Ask only for missing information that materially affects the search. Never invent missing skills or experience.
-
-## Deterministic local state and verification
-
-For durable application exclusion, use `python scripts/cityjobs_state.py --state PRIVATE_PATH add --record VERIFIED_JOB.json`.
-The JSON must include an official `canonical_url` and should contain `job_id`,
-`agency`, `business_title`, `civil_service_title`, `unit`, `duties`,
-`qualifications`, `compensation`, `closing_date`, `explicit_status` when verified.
-An official URL alone is sufficient to save, but insufficient for semantic repost detection.
-Use `python scripts/cityjobs_state.py --state PRIVATE_PATH filter --input VERIFIED_POSTINGS.json` to pre-filter
-independently verified official job records before personalized JD matching. Review
-`possible_reposts` manually; do not discard them automatically.
-The default state path is `~/.local/share/nyc-cityjobs-matcher/state.json` (mode 0600).
-Store it outside this public repository and back it up privately; other hosts cannot
-automatically access local files. Do not report cross-device synchronization without evidence.
-The helper makes no network calls; the Agent must fetch live official postings.
-A closed/expired official banner overrides a future posting deadline. A future closing
-date alone does not prove the job is open. Unknown opening status must be rechecked.
-
-### Repeatable evidence rubric
-
-Make a requirement-by-requirement evidence table with categories `supported`,
-`partially supported`, `unknown`, `not supported`. Confirm required civil-service
-eligibility and minimum qualifications *before* considering Strong/Good fit.
-A confirmed failed mandatory gate means Low fit / likely disqualified regardless
-of keyword overlap. An unresolved mandatory gate prohibits Strong match and
-must be flagged. Strong requires confirmed mandatory gates plus substantial duty
-evidence; Good requires confirmed gates and transferable duty evidence;
-Stretch indicates substantial documented gaps without confirmed disqualification.
-Do not invent numeric scores, precise probabilities or qualifications.
-
-## Applied-job exclusion rule
-
-Maintain an Applied Jobs Ledger for jobs the user has already applied to.
-
-### When the user says they applied
-
-If the user says they applied to a job, submitted an application, completed an application, or wants a job excluded, and an official posting link is not already present in the same message or immediately available in context, actively request the official job-posting URL.
-
-Use a short request such as:
-
-> Please send the official NYC CityJobs posting link for that application. I’ll use its Job ID/JID and posting details to exclude the same job and materially identical reposts from future results.
-
-Do not ask for application confirmation emails, applicant IDs, names, or other personal information when the posting URL is sufficient.
-
-### After receiving the link
-
-Extract and store, when available:
-- canonical official posting URL;
-- official Job ID;
-- JID/slug from the CityJobs URL;
-- agency;
-- exact business/job title;
-- civil-service title;
-- posting date;
-- closing date;
-- normalized agency + title key;
-- a brief fingerprint of the vacancy sufficient to recognize materially identical reposts.
-
-Treat the job as applied even if the posting later closes or the URL changes.
-
-If the supplied URL is inaccessible but clearly identifies the official NYC posting, retain the URL and any extractable identifiers. If the user names an applied job without a link, temporarily suppress that exact title/agency from recommendations for the current interaction and continue requesting the official link for durable deduplication.
-
-See `references/STATE_SCHEMA.md` for the recommended ledger structure.
-
-## Deduplication rules
-
-Exclude an applied job when any strong identifier matches:
-1. official Job ID;
-2. CityJobs JID/URL slug;
-3. canonical official posting URL;
-4. agency + title similarity alone is **not** a strong identifier; mark for review;
-5. high-confidence materially identical reposting with substantially the same duties, civil-service title, qualifications, unit, and compensation even if a new URL or JID is used.
-
-For borderline reposts, explain the ambiguity instead of silently excluding a potentially distinct vacancy.
-
-For non-applied search results, deduplicate exact strong identifiers first. Same agency/title without distinctive duties/unit/qualifications is only a possible duplicate and must not be silently removed.
-
-## Search scope and role discovery
-
-Choose the workflow from the user's request:
-
-1. **Explicit scope:** Follow the roles, responsibilities, keywords, agencies and constraints the user specifies. Search adjacent titles only when their duties still fall within that scope. If a mandatory qualification is missing, report it; do not silently switch to a different role family.
-2. **Unknown target roles:** Obtain an anonymized profile, identify plausible role families from actual responsibilities, transferable skills, achievements, education and licenses, and explain the evidence for each direction. Use these directions to search official postings without requiring the user to know job titles in advance.
-3. **Specific posting or JD:** Assess the supplied official posting directly against the profile. The user does not need to select a role family first. Do not recommend unrelated vacancies unless requested.
-
-When scope and profile are both available, use scope to decide where to search and JD-to-profile evidence to decide whether each posting fits. Do not substitute technology tags or title keywords for reading the JD. If the user declines to provide experience, search their requested scope and label results as a general search rather than personalized matching.
-
-If useful directions fall outside an explicit scope, offer them separately as optional suggestions and seek the user's preference before expanding the search. When the target is unknown, begin with evidence-backed directions and refine them from user feedback.
-
-## Source rules
-
-Use current web research for every search run.
-
-Prefer official NYC sources as the source of truth. Third-party pages may be used for discovery only; verify the vacancy against an official NYC posting before recommending it.
-
-Verify that the job is still open when possible. Do not present a closed or expired posting as actionable.
-
-## Matching framework
-
-Rank only jobs that are not in the Applied Jobs Ledger.
-
-Assess fit using the anonymized candidate profile. Weight:
-- overlap with required professional skills, methods and domain knowledge;
-- overlap with day-to-day duties;
-- seniority and years-of-experience alignment;
-- scale and complexity of prior responsibilities and work scope;
-- transferable accomplishments;
-- education, professional license and certification requirements;
-- civil-service title, exam, permanent-title, or hiring-pool eligibility;
-- salary and work-arrangement preferences when supplied;
-- likely disqualifiers.
-
-Suggested qualitative buckets:
-- Strong match
-- Good match
-- Stretch match
-- Low fit / likely disqualified
-
-Do not inflate fit because of keyword overlap when a mandatory eligibility requirement is missing.
-
-## Match each JD to evidence
-
-For each posting, compare mandatory qualifications, essential duties and preferred qualifications separately against the supplied profile. Mark each material requirement as supported, partially supported, missing or unknown, citing the corresponding experience when available.
-
-Inspect experience duration, relevant education, licenses, civil-service eligibility, job responsibilities, professional skills and user constraints. Treat keywords as discovery aids; do not assume fit from a title or tag match. Unknown information is not a confirmed qualification or disqualification. Flag confirmed mandatory gaps prominently and request clarification when an unknown gating requirement could change the conclusion.
-
-For inferred role families, explain both transferable strengths and any transition gaps. Do not restrict matching to the user's previous exact job title, and do not assume every posting in an inferred family is suitable.
-
-## Required output for each recommended match
-
-For every remaining match, include:
-- exact job title;
-- agency;
-- official Job ID;
-- official JID/slug when available;
-- location or work arrangement when listed;
-- salary range;
-- posting date;
-- closing date;
-- civil-service title;
-- minimum qualification requirements;
-- exam, permanent-title, hiring-pool, or civil-service eligibility requirements;
-- direct official application link;
-- fit bucket;
-- concise explanation of why it fits or does not fit the anonymized profile;
-- meaningful gaps, preferred qualifications, and likely disqualifiers.
-
-Flag deadlines within 14 calendar days of the search date.
-
-## Resume-tailoring notes
-
-For each Strong match and useful Good match, provide 3–5 concrete resume-tailoring notes.
-
-Only use experience contained in the anonymized candidate profile. Never invent qualifications, certifications, accomplishments, employer names, projects, or metrics.
-
-Tailoring should focus on:
-- exact relevant ATS keywords from the posting;
-- which existing skills/accomplishments should be moved higher;
-- how to reframe truthful experience to mirror the job's responsibilities;
-- which quantified accomplishments are most relevant;
-- which less-relevant content can be deemphasized.
-
-Do not write false claims merely to satisfy a requirement.
-
-## Interaction after recommendations
-
-When the user later says they applied to one of the recommended roles:
-1. check whether the official posting URL is present;
-2. if missing, request it;
-3. parse identifiers and add the job to the Applied Jobs Ledger;
-4. confirm that the vacancy and materially identical reposts will be excluded from subsequent searches.
-
-If the user shares multiple applied-job links at once, process them in one batch.
-
-## Empty-result behavior
-
-If no meaningful high-fit, not-yet-applied role is found:
-- in an interactive/manual search, state briefly that no meaningful new high-fit un-applied role was found;
-- in a scheduled/notification workflow that supports silent runs, do not notify unless there is a meaningful new match.
-
-## Safety and accuracy
-
-- Never fabricate a job, Job ID, salary, deadline, or qualification.
-- Distinguish required qualifications from preferred qualifications.
-- Treat civil-service/title eligibility as a potential gating condition, not a minor gap.
-- Do not infer that the user holds a certification, degree, title, exam status, or permanent status unless provided.
-- Do not expose or request unnecessary personally identifying employment information.
-- Do not use the user's private work-history employer names as matching features even if they are volunteered; normalize them to employer type unless the user explicitly asks otherwise.
+## Acceptance
+Use [acceptance-scenarios.md](references/acceptance-scenarios.md) for prompt-level evaluation, not executable regression tests. Private state guidance: [STATE_SCHEMA.md](references/STATE_SCHEMA.md); privacy-preserving input: [INTAKE_TEMPLATE.md](references/INTAKE_TEMPLATE.md).
