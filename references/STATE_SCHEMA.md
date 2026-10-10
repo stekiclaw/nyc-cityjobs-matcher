@@ -7,26 +7,27 @@ This file defines a logical state model. The host may store it in conversation s
 ```json
 {
   "candidate_profile": {
-    "profile_version": 1,
+    "profile_version": 2,
     "anonymized": true,
+    "requested_search_scope": {
+      "role_families": [],
+      "titles_or_keywords": [],
+      "agencies": [],
+      "constraints": [],
+      "target_unknown": false
+    },
     "target_role_families": [],
+    "inferred_role_families": [],
     "seniority": null,
     "years_experience": null,
-    "operating_systems": [],
-    "directory_identity": [],
-    "endpoint_management": [],
-    "deployment_imaging": [],
-    "patching_update_management": [],
-    "scripting_automation": [],
-    "collaboration_productivity": [],
-    "networking": [],
-    "security": [],
-    "virtualization_cloud": [],
-    "hardware_support": [],
-    "ticketing_itil": [],
-    "environment_scale": null,
+    "responsibilities": [],
+    "professional_skills": [],
+    "tools_and_methods": [],
+    "domain_knowledge": [],
+    "work_scope": null,
     "quantified_accomplishments": [],
     "certifications": [],
+    "professional_licenses": [],
     "education": [],
     "civil_service_status": null,
     "salary_preferences": null,
@@ -37,7 +38,7 @@ This file defines a logical state model. The host may store it in conversation s
 }
 ```
 
-Do not store employer names from the user's private work history in this normalized profile.
+Preserve explicit search scope separately from inferred role families. Store evidence and gaps with each inferred direction; do not treat suggestions as user-selected targets. When upgrading a version 1 profile, preserve supplied occupational skills as relevant professional_skills or tools_and_methods rather than discarding them, and do not infer unsupported experience. Do not store employer names from the user's private work history in this normalized profile.
 
 ## Applied Jobs Ledger
 
