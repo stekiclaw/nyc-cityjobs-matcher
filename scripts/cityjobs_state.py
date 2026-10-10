@@ -135,9 +135,9 @@ def match(candidate, applied):
 
 def open_status(record, today):
     status = text(record.get("explicit_status"))
-    if status in CLOSED:
+    if any(re.search(r"\\b" + word + r"\\b", status) for word in CLOSED):
         return "closed"
-    if status == "open":
+    if status in ("open", "accepting applications"):
         return "open"  # explicit official opening overrides a stale date
     until = record.get("closing_date")
     if until:
