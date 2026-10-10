@@ -1,13 +1,13 @@
 ---
 name: nyc-cityjobs-matcher
-description: Use when searching NYC CityJobs for high-fit IT roles. Builds matching from a privacy-preserving, anonymized work-experience profile and excludes previously applied jobs using user-supplied official job-posting links.
+description: Use when searching NYC CityJobs for roles within a user's requested scope or matching job descriptions to an anonymized work-experience profile, including when the user needs help identifying suitable role families. Builds matching from a privacy-preserving, anonymized work-experience profile and excludes previously applied jobs using user-supplied official job-posting links.
 ---
 
 # NYC CityJobs Matcher
 
 ## Purpose
 
-Find newly posted or still-open, high-fit NYC CityJobs roles in Windows systems administration, help desk/service desk, desktop support, endpoint support, mobile-device management, infrastructure support, and cyber security analyst work.
+Find newly posted or still-open NYC CityJobs roles within the user's requested scope. Support any job family available on NYC CityJobs; do not impose a default occupation, sector, technology tag or fixed list of job titles. If the user is unsure what to search for, infer suitable role families from their anonymized experience and match actual posting job descriptions (JDs) to that evidence.
 
 This skill is intentionally generic. It must not assume or import any specific person's work history, employer, application history, name, or prior conversations unless the user explicitly supplies that information for this skill.
 
@@ -18,8 +18,8 @@ Before performing a personalized job match, obtain an anonymized candidate profi
 The profile may contain:
 - job functions and role level;
 - years of experience;
-- technologies, platforms, and tools;
-- environment size or support scope;
+- professional skills, methods, tools, and relevant domain knowledge;
+- work scope, project scale, service volume, or organizational complexity;
 - responsibilities;
 - measurable accomplishments;
 - certifications and education;
@@ -48,7 +48,7 @@ At the start of a personalized search, check whether a usable anonymized candida
 
 If no usable profile is available, ask the user to provide one before ranking jobs. Use a compact request similar to:
 
-> To match jobs accurately, please send an anonymized work-history summary. Do not include company/agency names or people's names. Include your role types, approximate years of experience, main technologies/tools, responsibilities, environment size, measurable accomplishments, certifications/education, civil-service eligibility if relevant, and any salary/location/work-arrangement preferences.
+> To match jobs accurately, please send an anonymized work-history summary. Do not include company/agency names or people's names. Include your role types, approximate years of experience, main professional skills/tools, responsibilities, work scope, measurable accomplishments, certifications/education, civil-service eligibility if relevant, and any salary/location/work-arrangement preferences.
 
 Do not require a resume. A short bullet summary is sufficient.
 
@@ -58,34 +58,25 @@ See `references/INTAKE_TEMPLATE.md` for the preferred structured intake.
 
 ## Candidate profile normalization
 
-Convert the user's anonymized input into a concise internal matching profile with these fields when available:
+Convert the user's anonymized input into a concise profile with these fields when available:
 
+- requested_search_scope (explicit role families, titles, keywords, agencies and constraints)
 - target_role_families
-- seniority
-- years_experience
-- operating_systems
-- directory_identity
-- endpoint_management
-- deployment_imaging
-- patching_update_management
-- scripting_automation
-- collaboration_productivity
-- networking
-- security
-- virtualization_cloud
-- hardware_support
-- ticketing_itil
-- environment_scale
+- inferred_role_families (with supporting experience and material gaps)
+- seniority and years_experience
+- responsibilities
+- professional_skills
+- tools_and_methods
+- domain_knowledge
+- work_scope
 - quantified_accomplishments
-- certifications
+- certifications and professional_licenses
 - education
 - civil_service_status
-- salary_preferences
-- location_preferences
-- work_arrangement_preferences
+- salary_preferences, location_preferences and work_arrangement_preferences
 - hard_exclusions
 
-Never invent missing skills or experience.
+Preserve user-provided target roles separately from inferred suggestions. Do not silently broaden or replace an explicit scope. Ask only for missing information that materially affects the search. Never invent missing skills or experience.
 
 ## Applied-job exclusion rule
 
@@ -134,32 +125,17 @@ For borderline reposts, explain the ambiguity instead of silently excluding a po
 
 For non-applied search results, deduplicate the result set using the same keys before ranking.
 
-## Search scope
+## Search scope and role discovery
 
-Search official NYC CityJobs listings for newly posted or still-open roles related to:
-- Windows systems administration;
-- systems/infrastructure support;
-- help desk/service desk;
-- desktop support;
-- endpoint engineering/support;
-- mobile-device management / UEM / MDM;
-- Microsoft 365 support;
-- identity / Active Directory support;
-- endpoint security;
-- cyber security analyst work.
+Choose the workflow from the user's request:
 
-Prioritize role concepts such as:
-- Senior Systems Administrator
-- Windows Support Engineer
-- Senior Helpdesk Technician
-- Service Desk Technician
-- Desktop Support Engineer
-- Endpoint/MDM Engineer
-- Systems Specialist
-- Infrastructure Support Engineer
-- Cyber Security Analyst
+1. **Explicit scope:** Follow the roles, responsibilities, keywords, agencies and constraints the user specifies. Search adjacent titles only when their duties still fall within that scope. If a mandatory qualification is missing, report it; do not silently switch to a different role family.
+2. **Unknown target roles:** Obtain an anonymized profile, identify plausible role families from actual responsibilities, transferable skills, achievements, education and licenses, and explain the evidence for each direction. Use these directions to search official postings without requiring the user to know job titles in advance.
+3. **Specific posting or JD:** Assess the supplied official posting directly against the profile. The user does not need to select a role family first. Do not recommend unrelated vacancies unless requested.
 
-Do not limit results to exact title matches; evaluate duties and requirements.
+When scope and profile are both available, use scope to decide where to search and JD-to-profile evidence to decide whether each posting fits. Do not substitute technology tags or title keywords for reading the JD. If the user declines to provide experience, search their requested scope and label results as a general search rather than personalized matching.
+
+If useful directions fall outside an explicit scope, offer them separately as optional suggestions and seek the user's preference before expanding the search. When the target is unknown, begin with evidence-backed directions and refine them from user feedback.
 
 ## Source rules
 
@@ -174,12 +150,12 @@ Verify that the job is still open when possible. Do not present a closed or expi
 Rank only jobs that are not in the Applied Jobs Ledger.
 
 Assess fit using the anonymized candidate profile. Weight:
-- overlap with required technical skills;
+- overlap with required professional skills, methods and domain knowledge;
 - overlap with day-to-day duties;
 - seniority and years-of-experience alignment;
-- scale and complexity of prior environment;
+- scale and complexity of prior responsibilities and work scope;
 - transferable accomplishments;
-- education/certification requirements;
+- education, professional license and certification requirements;
 - civil-service title, exam, permanent-title, or hiring-pool eligibility;
 - salary and work-arrangement preferences when supplied;
 - likely disqualifiers.
@@ -192,29 +168,13 @@ Suggested qualitative buckets:
 
 Do not inflate fit because of keyword overlap when a mandatory eligibility requirement is missing.
 
-## Technical keywords to inspect
+## Match each JD to evidence
 
-Pay particular attention to requirements involving:
-- Windows desktop/server administration
-- Active Directory / Entra ID
-- Group Policy
-- Microsoft Endpoint Configuration Manager / SCCM
-- Intune / Workspace ONE / other MDM or UEM
-- WSUS
-- MDT / Autopilot / OS deployment
-- PowerShell
-- WinRM / remote administration
-- endpoint troubleshooting
-- imaging and provisioning
-- patch management
-- Microsoft 365
-- Teams and collaboration support
-- hardware/software troubleshooting
-- endpoint security
-- identity and access management
-- networking fundamentals
-- vulnerability management
-- SIEM / EDR / security operations when relevant
+For each posting, compare mandatory qualifications, essential duties and preferred qualifications separately against the supplied profile. Mark each material requirement as supported, partially supported, missing or unknown, citing the corresponding experience when available.
+
+Inspect experience duration, relevant education, licenses, civil-service eligibility, job responsibilities, professional skills and user constraints. Treat keywords as discovery aids; do not assume fit from a title or tag match. Unknown information is not a confirmed qualification or disqualification. Flag confirmed mandatory gaps prominently and request clarification when an unknown gating requirement could change the conclusion.
+
+For inferred role families, explain both transferable strengths and any transition gaps. Do not restrict matching to the user's previous exact job title, and do not assume every posting in an inferred family is suitable.
 
 ## Required output for each recommended match
 
