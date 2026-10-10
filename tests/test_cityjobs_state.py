@@ -39,6 +39,8 @@ class CityJobsTests(unittest.TestCase):
         self.assertEqual(match(b,job())["reason"], "high_confidence_repost")
     def test_closure_overrides_date(self):
         self.assertEqual(open_status({"explicit_status":"expired", "closing_date":"2099-01-01"}, dt.date(2026,10,10)), "closed")
+    def test_expired_banner_override(self):
+        self.assertEqual(open_status({"explicit_status":"This vacancy has now expired", "closing_date":"2099-01-01"}, dt.date(2026,10,10)), "closed")
     def test_date_alone_unknown(self):
         self.assertEqual(open_status({"closing_date":"2099-01-01"}, dt.date(2026,10,10)), "unknown")
     def test_persist_restart(self):
