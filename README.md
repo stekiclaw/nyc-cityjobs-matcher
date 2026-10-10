@@ -139,3 +139,25 @@ Without a link, an explicitly identified job can be temporarily suppressed in th
 The skill defines behavior and a state model; actual persistence depends on the host. If the host supports skill or user state, store the normalized profile and Applied Jobs Ledger there. Otherwise, maintain them in the active conversation and ask the user to provide or export the ledger when moving to a new environment.
 
 Installing the skill does not create a scheduled task or guarantee that application history transfers between environments. Do not commit personal profiles or application ledgers to this public repository.
+
+
+## 修复后的本地状态工具 / Persistent ledger helper
+
+本仓库新增 `scripts/cityjobs_state.py`（Python 3.9+、仅标准库），为 Agent 提供**可执行**的申请记录保存、重复排除和待复核识别；**不负责联网搜索或自动评价 JD**。Agent 必须先核对官方 CityJobs 页面，再构造 JSON 输入。状态默认保存在当前计算机的 `~/.local/share/nyc-cityjobs-matcher/state.json`，而非 GitHub 仓库。
+
+**中文示例：**
+```bash
+python scripts/cityjobs_state.py add --record verified_applied_job.json
+python scripts/cityjobs_state.py list
+python scripts/cityjobs_state.py filter --input verified_current_postings.json --as-of 2026-10-10
+python -m unittest discover -s tests -v
+```
+
+`verified_applied_job.json` 为单条记录，例如：
+```json
+{"canonical_url":"https://cityjobs.nyc.gov/job/example-jid-12345","job_id":"123456","agency":"Example Agency","business_title":"Example Role"}
+```
+
+`verified_current_postings.json` 是相同格式记录构成的 JSON 数组，建议加入核实的 `civil_service_title`、`unit`、`duties`、`qualifications`、`compensation`、`closing_date` 和 `explicit_status`。输出区分 `candidates`、`excluded_applied`、`possible_reposts`、`closed`、`duplicate_results`。同一机构/职位名称**不足以自动排除**。不要把未核实的职位状态当成仍在招聘。若在其他主机使用，需要自行安全迁移本地状态文件。
+
+**English:** The stdlib-only helper persists an applied-jobs ledger locally and conservatively excludes exact matches or well-corroborated reposts. It does not fetch vacancies, match resumes, or synchronize state between devices. Supply Agent-verified official job records as a JSON object (`add`) or array (`filter`), and review `possible_reposts` rather than suppressing them. Explicit expired/closed notices override future posted-until dates. CI runs `python -m unittest discover -s tests -v` on Python 3.11 and 3.13.
