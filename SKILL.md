@@ -78,6 +78,35 @@ Convert the user's anonymized input into a concise profile with these fields whe
 
 Preserve user-provided target roles separately from inferred suggestions. Do not silently broaden or replace an explicit scope. Ask only for missing information that materially affects the search. Never invent missing skills or experience.
 
+## Deterministic local state and verification
+
+For durable application exclusion, use `python scripts/cityjobs_state.py --state PRIVATE_PATH add --record VERIFIED_JOB.json`.
+The JSON must include an official `canonical_url` and should contain `job_id`,
+`agency`, `business_title`, `civil_service_title`, `unit`, `duties`,
+`qualifications`, `compensation`, `closing_date`, `explicit_status` when verified.
+An official URL alone is sufficient to save, but insufficient for semantic repost detection.
+Use `python scripts/cityjobs_state.py --state PRIVATE_PATH filter --input VERIFIED_POSTINGS.json` to pre-filter
+independently verified official job records before personalized JD matching. Review
+`possible_reposts` manually; do not discard them automatically.
+The default state path is `~/.local/share/nyc-cityjobs-matcher/state.json` (mode 0600).
+Store it outside this public repository and back it up privately; other hosts cannot
+automatically access local files. Do not report cross-device synchronization without evidence.
+The helper makes no network calls; the Agent must fetch live official postings.
+A closed/expired official banner overrides a future posting deadline. A future closing
+date alone does not prove the job is open. Unknown opening status must be rechecked.
+
+### Repeatable evidence rubric
+
+Make a requirement-by-requirement evidence table with categories `supported`,
+`partially supported`, `unknown`, `not supported`. Confirm required civil-service
+eligibility and minimum qualifications *before* considering Strong/Good fit.
+A confirmed failed mandatory gate means Low fit / likely disqualified regardless
+of keyword overlap. An unresolved mandatory gate prohibits Strong match and
+must be flagged. Strong requires confirmed mandatory gates plus substantial duty
+evidence; Good requires confirmed gates and transferable duty evidence;
+Stretch indicates substantial documented gaps without confirmed disqualification.
+Do not invent numeric scores, precise probabilities or qualifications.
+
 ## Applied-job exclusion rule
 
 Maintain an Applied Jobs Ledger for jobs the user has already applied to.
@@ -118,12 +147,12 @@ Exclude an applied job when any strong identifier matches:
 1. official Job ID;
 2. CityJobs JID/URL slug;
 3. canonical official posting URL;
-4. agency + materially identical business title;
-5. materially identical reposting with substantially the same duties, civil-service title, qualifications, unit, and compensation even if a new URL or JID is used.
+4. agency + title similarity alone is **not** a strong identifier; mark for review;
+5. high-confidence materially identical reposting with substantially the same duties, civil-service title, qualifications, unit, and compensation even if a new URL or JID is used.
 
 For borderline reposts, explain the ambiguity instead of silently excluding a potentially distinct vacancy.
 
-For non-applied search results, deduplicate the result set using the same keys before ranking.
+For non-applied search results, deduplicate exact strong identifiers first. Same agency/title without distinctive duties/unit/qualifications is only a possible duplicate and must not be silently removed.
 
 ## Search scope and role discovery
 
