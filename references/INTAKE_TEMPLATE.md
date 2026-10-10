@@ -1,32 +1,21 @@
 # Anonymized Candidate Intake Template
 
-Ask the user to complete as much of this as they want. Company/agency names and people's names are not needed.
+Ask for missing information only. Let the user describe their work without knowing suitable job titles in advance. Company/agency names from personal work history and people's names are not needed.
 
 ```text
-Target roles:
-- e.g. Windows Systems Administrator, Desktop Support, Endpoint Engineer, Cyber Security Analyst
+Search request:
+- Target roles, responsibilities, keywords or agencies, if known:
+- If unsure, write “Help me identify suitable roles from my experience.”
+- Specific official posting URL or JD to assess, if any:
 
-Experience level:
-- Approximate total IT experience:
-- Approximate experience in the target area:
-- Current/recent role type (generic title is fine):
-
-Technical experience:
-- Windows desktop/server:
-- Active Directory / Entra ID:
-- SCCM / Intune / Workspace ONE / other endpoint tools:
-- WSUS / patch management:
-- Imaging / MDT / Autopilot:
-- PowerShell / scripting:
-- Microsoft 365 / Teams / Exchange:
-- Networking:
-- Security / EDR / SIEM / vulnerability management:
-- Other relevant tools:
-
-Scope:
-- Approximate users/endpoints supported:
-- Tier/level of support:
-- Onsite/remote/multi-site experience:
+Experience:
+- Approximate total work experience:
+- Approximate experience in relevant areas:
+- Current/recent role types (generic titles are fine):
+- Main responsibilities:
+- Professional skills and domain knowledge:
+- Tools, methods or platforms used:
+- Work scope (project scale, service volume, team responsibility, or other relevant measures):
 
 Measurable accomplishments:
 - 1.
@@ -34,17 +23,19 @@ Measurable accomplishments:
 - 3.
 
 Credentials:
-- Certifications:
 - Education:
-- NYC civil-service title/list/exam status, if relevant and comfortable sharing:
+- Professional licenses and certifications:
+- Civil-service title/list/exam status, if relevant and comfortable sharing:
 
 Preferences:
 - Minimum salary (optional):
-- Preferred borough/location/commute (optional):
-- Onsite/hybrid/remote preference (optional):
+- Preferred location/commute (optional):
+- Onsite/hybrid/remote or schedule preferences (optional):
 - Roles or conditions to exclude:
 ```
 
-Privacy reminder to show with intake:
+Adapt follow-up questions to the user's field rather than presenting a technical checklist. Do not treat unknown target roles as missing mandatory information. When explicit scope is provided, preserve it; infer suitable role families only when requested or when the user is unsure.
 
-> Please leave out company/agency names from your own employment history, people's names, personal contact details, employee/ticket IDs, exact addresses, internal hostnames/domains, credentials, or other confidential information. Generic employer descriptions such as “public-sector agency” or “large enterprise” are enough.
+Privacy reminder:
+
+> Please omit company/agency names from your own work history, people's names, contact details, employee or case IDs, exact addresses, internal systems, credentials and confidential information. Generic employer descriptions such as “public-sector agency” or “large organization” are enough.
